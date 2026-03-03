@@ -39,6 +39,13 @@ Sonra Claude Code'u yeniden başlat.
 
 ```bash
 rm ~/.claude/statusline.sh ~/.claude/ratelimit_cache.json
+python3 -c "
+import json, os
+p = os.path.expanduser('~/.claude/settings.json')
+s = json.load(open(p))
+s.pop('statusLine', None)
+json.dump(s, open(p, 'w'), indent=2)
+"
 ```
 
-Ardından `~/.claude/settings.json` dosyasından `"statusLine"` bloğunu sil.
+Sonra Claude Code'u yeniden başlat.

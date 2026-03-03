@@ -1,7 +1,7 @@
 #!/bin/bash
-# Claude Code Quota Status Line - Installer
-# Shows model, context window, 5h/7d rate limits in status bar
-# Requirements: macOS, Claude Code, Claude Pro/Max subscription, python3
+# Claude Code Kota Durum Çubuğu - Yükleyici
+# Durum çubuğunda model, bağlam penceresi, 5s/7g hız limitlerini gösterir
+# Gereksinimler: macOS, Claude Code, Claude Pro/Max aboneliği, python3
 
 set -e
 
@@ -11,42 +11,42 @@ DIM='\033[2m'
 RESET='\033[0m'
 
 echo ""
-echo "  ⚡ Claude Code Quota Status Line Installer"
-echo "  ─────────────────────────────────────────"
+echo "  ⚡ Claude Code Kota Durum Çubuğu Yükleyici"
+echo "  ────────────────────────────────────────────"
 echo ""
 
-# Check requirements
+# Gereksinimleri kontrol et
 if [[ "$(uname)" != "Darwin" ]]; then
-    echo -e "  ${RED}✗${RESET} macOS required (uses Keychain for auth)"
+    echo -e "  ${RED}✗${RESET} macOS gerekli (kimlik doğrulama için Keychain kullanılır)"
     exit 1
 fi
 
 if ! command -v python3 &>/dev/null; then
-    echo -e "  ${RED}✗${RESET} python3 not found"
+    echo -e "  ${RED}✗${RESET} python3 bulunamadı"
     exit 1
 fi
 
 if ! command -v claude &>/dev/null; then
-    echo -e "  ${RED}✗${RESET} Claude Code not found. Install: npm install -g @anthropic-ai/claude-code"
+    echo -e "  ${RED}✗${RESET} Claude Code bulunamadı. Kur: npm install -g @anthropic-ai/claude-code"
     exit 1
 fi
 
-# Check Claude Code credentials
+# Claude Code kimlik bilgilerini kontrol et
 if ! security find-generic-password -s "Claude Code-credentials" -w &>/dev/null; then
-    echo -e "  ${RED}✗${RESET} Claude Code credentials not found. Run 'claude' first and log in."
+    echo -e "  ${RED}✗${RESET} Claude Code kimlik bilgileri bulunamadı. Önce 'claude' çalıştırıp giriş yapın."
     exit 1
 fi
 
-echo -e "  ${GREEN}✓${RESET} All checks passed"
+echo -e "  ${GREEN}✓${RESET} Tüm kontroller başarılı"
 echo ""
 
-# Create statusline script
+# Durum çubuğu scriptini oluştur
 mkdir -p ~/.claude
 
 cat > ~/.claude/statusline.sh << 'STATUSLINE'
 #!/usr/bin/env python3
-# Claude Code Status Line - Quota & Rate Limit Tracker
-# Shows session info + 5h/7d rate limit utilization
+# Claude Code Durum Çubuğu - Kota & Hız Limiti Takibi
+# Oturum bilgisi + 5s/7g hız limiti kullanımını gösterir
 
 import sys
 import json
@@ -56,9 +56,9 @@ import subprocess
 
 HOME = os.path.expanduser("~")
 CACHE_FILE = os.path.join(HOME, ".claude", "ratelimit_cache.json")
-CACHE_MAX_AGE = 300  # Refresh every 5 minutes
+CACHE_MAX_AGE = 300  # Her 5 dakikada yenile
 
-# --- Parse session data from stdin ---
+# --- Stdin'den oturum verisi oku ---
 try:
     session = json.load(sys.stdin)
 except Exception:
@@ -78,10 +78,10 @@ if isinstance(model_info, dict):
 else:
     model_name = str(model_info)
 
-# Shorten model name
+# Model adını kısalt
 model_short = model_name.replace(" (1M context)", "").replace("claude-", "")
 
-# Format context window
+# Bağlam penceresi formatla
 def fmt_tokens(n):
     if n >= 1_000_000:
         return f"{n/1_000_000:.1f}M"
@@ -89,7 +89,7 @@ def fmt_tokens(n):
         return f"{n/1_000:.0f}k"
     return str(n)
 
-# --- Rate limit data ---
+# --- Hız limiti verisi ---
 def get_oauth_token():
     try:
         result = subprocess.run(
@@ -139,7 +139,7 @@ def save_cache(data):
     except Exception:
         pass
 
-# Check cache freshness
+# Önbellek tazeliğini kontrol et
 cache = load_cache()
 cache_age = time.time() - cache.get("timestamp", 0)
 
@@ -159,27 +159,33 @@ if cache_age > CACHE_MAX_AGE:
             }
             save_cache(cache)
 
-# --- Colorize percentage ---
+# --- Yüzdeyi renklendir ---
 def color_pct(utilization):
     pct = f"{utilization*100:.0f}%"
     if utilization < 0.5:
-        return f"\033[38;2;39;245;70m{pct}\033[0m"  # green
+        return f"\033[38;2;39;245;70m{pct}\033[0m"  # yeşil
     elif utilization < 0.8:
-        return f"\033[38;2;245;242;39m{pct}\033[0m"  # yellow
+        return f"\033[38;2;245;242;39m{pct}\033[0m"  # sarı
     else:
-        return f"\033[38;2;245;39;39m{pct}\033[0m"  # red
+        return f"\033[38;2;245;39;39m{pct}\033[0m"  # kırmızı
 
 def fmt_reset(ts):
     if not ts:
         return ""
-    reset_time = time.localtime(ts)
-    now = time.localtime()
-    if reset_time.tm_yday == now.tm_yday and reset_time.tm_year == now.tm_year:
-        return time.strftime("@%H:%M", reset_time)
+    remaining = int(ts - time.time())
+    if remaining <= 0:
+        return "0dk"
+    days = remaining // 86400
+    hours = (remaining % 86400) // 3600
+    mins = (remaining % 3600) // 60
+    if days > 0:
+        return f"{days}g {hours}s {mins}dk"
+    elif hours > 0:
+        return f"{hours}s {mins}dk"
     else:
-        return time.strftime("@%b %d, %H:%M", reset_time).lower()
+        return f"{mins}dk"
 
-# --- Format output ---
+# --- Çıktıyı formatla ---
 util_5h = cache.get("5h_util", 0)
 reset_5h = cache.get("5h_reset", 0)
 util_7d = cache.get("7d_util", 0)
@@ -188,7 +194,7 @@ reset_7d = cache.get("7d_reset", 0)
 pct_5h = color_pct(util_5h)
 pct_7d = color_pct(util_7d)
 
-# Colors
+# Renkler
 DIM = "\033[2m"
 GREEN = "\033[38;2;39;245;70m"
 CYAN = "\033[36m"
@@ -196,7 +202,7 @@ YELLOW = "\033[38;2;245;242;39m"
 RESET = "\033[0m"
 BOLD = "\033[1m"
 
-# Context color based on usage
+# Kullanıma göre bağlam rengi
 if used_pct < 50:
     ctx_color = GREEN
 elif used_pct < 80:
@@ -207,8 +213,8 @@ else:
 line1_parts = [
     f"{CYAN}{model_short}{RESET}",
     f"{fmt_tokens(total_tokens)}/{fmt_tokens(cw_size)}",
-    f"{ctx_color}{used_pct}% used{RESET}",
-    f"{ctx_color}{remaining_pct}% remain{RESET}",
+    f"{ctx_color}%{used_pct} kull.{RESET}",
+    f"{ctx_color}%{remaining_pct} kalan{RESET}",
     f"5h {pct_5h} {DIM}{fmt_reset(reset_5h)}{RESET}",
     f"7d {pct_7d} {DIM}{fmt_reset(reset_7d)}{RESET}",
     f"{DIM}${cost:.2f}{RESET}",
@@ -218,13 +224,13 @@ print(f" {DIM}|{RESET} ".join(line1_parts))
 STATUSLINE
 
 chmod +x ~/.claude/statusline.sh
-echo -e "  ${GREEN}✓${RESET} Created ~/.claude/statusline.sh"
+echo -e "  ${GREEN}✓${RESET} ~/.claude/statusline.sh oluşturuldu"
 
 # Update settings.json
 SETTINGS_FILE="$HOME/.claude/settings.json"
 
 if [ -f "$SETTINGS_FILE" ]; then
-    # Add statusLine to existing settings
+    # Mevcut ayarlara statusLine ekle
     python3 -c "
 import json
 with open('$SETTINGS_FILE') as f:
@@ -234,7 +240,7 @@ with open('$SETTINGS_FILE', 'w') as f:
     json.dump(s, f, indent=2)
 "
 else
-    # Create new settings file
+    # Yeni ayar dosyası oluştur
     cat > "$SETTINGS_FILE" << 'SETTINGS'
 {
   "statusLine": {
@@ -246,9 +252,9 @@ else
 SETTINGS
 fi
 
-echo -e "  ${GREEN}✓${RESET} Updated ~/.claude/settings.json"
+echo -e "  ${GREEN}✓${RESET} ~/.claude/settings.json güncellendi"
 echo ""
-echo -e "  ${GREEN}Done!${RESET} Restart Claude Code to see the status line."
+echo -e "  ${GREEN}Tamam!${RESET} Durum çubuğunu görmek için Claude Code'u yeniden başlatın."
 echo ""
-echo -e "  ${DIM}Shows: Model | Tokens | Context % | 5h rate limit | 7d rate limit | Cost${RESET}"
+echo -e "  ${DIM}Gösterir: Model | Token | Bağlam % | 5s kota | 7g kota | Maliyet${RESET}"
 echo ""
