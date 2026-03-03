@@ -1,46 +1,44 @@
 # clauquota
 
-Claude Code status line that shows your real-time rate limit usage.
-
-![screenshot](https://img.shields.io/badge/Claude_Code-Status_Line-blue)
+Claude Code'da kalan kotanı anlık olarak gösteren status line.
 
 ```
 Opus 4.6 | 80k/1.0M | 6% used | 94% remain | 5h 2% @14:00 | 7d 29% @mar 06, 14:00 | $1.95
 ```
 
-## What it shows
+## Ne gösterir?
 
-| Field | Description |
-|-------|-------------|
-| `Opus 4.6` | Current model |
-| `80k/1.0M` | Tokens used / context window size |
-| `6% used` | Context window usage |
-| `94% remain` | Context window remaining |
-| `5h 2%` | 5-hour rate limit utilization |
-| `7d 29%` | 7-day rate limit utilization |
-| `@mar 06, 14:00` | Rate limit reset time |
-| `$1.95` | Session cost (USD) |
+| Alan | Açıklama |
+|------|----------|
+| `Opus 4.6` | Kullanılan model |
+| `80k/1.0M` | Kullanılan token / toplam context window |
+| `6% used` | Context window doluluk oranı |
+| `94% remain` | Context window kalan oran |
+| `5h 2%` | 5 saatlik rate limit kullanımı |
+| `7d 29%` | 7 günlük rate limit kullanımı |
+| `@mar 06, 14:00` | Rate limit sıfırlanma zamanı |
+| `$1.95` | Oturum maliyeti (USD) |
 
-Colors change based on usage: green (< 50%), yellow (50-80%), red (> 80%).
+Renkler kullanıma göre değişir: yeşil (< %50), sarı (%50-80), kırmızı (> %80).
 
-## Install
+## Kurulum
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dijitalbaslangic/clauquota/main/install.sh | bash
 ```
 
-Then restart Claude Code.
+Sonra Claude Code'u yeniden başlat.
 
-## Requirements
+## Gereksinimler
 
 - macOS
-- Claude Code installed and logged in
-- Claude Pro/Max subscription
+- Claude Code kurulu ve giriş yapılmış
+- Claude Pro/Max aboneliği
 
-## Uninstall
+## Kaldırma
 
 ```bash
 rm ~/.claude/statusline.sh ~/.claude/ratelimit_cache.json
 ```
 
-Then remove the `"statusLine"` block from `~/.claude/settings.json`.
+Ardından `~/.claude/settings.json` dosyasından `"statusLine"` bloğunu sil.
