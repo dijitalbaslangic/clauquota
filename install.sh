@@ -40,29 +40,21 @@ fi
 echo -e "  ${GREEN}✓${RESET} Tüm kontroller başarılı"
 echo ""
 
-# Abonelik yenileme günü
+# Abonelik yenileme günü (parametre veya mevcut ayar)
 SUB_FILE="$HOME/.claude/subscription.json"
-if [ -f "$SUB_FILE" ]; then
+RENEWAL_DAY="${1:-}"
+
+if [[ -n "$RENEWAL_DAY" && "$RENEWAL_DAY" =~ ^[0-9]+$ && "$RENEWAL_DAY" -ge 1 && "$RENEWAL_DAY" -le 31 ]]; then
+    echo "{\"renewal_day\": $RENEWAL_DAY}" > "$SUB_FILE"
+    echo -e "  ${GREEN}✓${RESET} Abonelik yenileme günü: $RENEWAL_DAY"
+elif [ -f "$SUB_FILE" ]; then
     CURRENT_DAY=$(python3 -c "import json; print(json.load(open('$SUB_FILE')).get('renewal_day', ''))" 2>/dev/null)
     echo -e "  ${DIM}Mevcut abonelik yenileme günü: ${RESET}${GREEN}${CURRENT_DAY}${RESET}"
-    echo -n "  Yeni gün girmek ister misiniz? (Enter=koru, 1-31): "
-    read -r NEW_DAY
-    if [[ -n "$NEW_DAY" && "$NEW_DAY" =~ ^[0-9]+$ && "$NEW_DAY" -ge 1 && "$NEW_DAY" -le 31 ]]; then
-        echo "{\"renewal_day\": $NEW_DAY}" > "$SUB_FILE"
-        echo -e "  ${GREEN}✓${RESET} Yenileme günü $NEW_DAY olarak güncellendi"
-    else
-        echo -e "  ${DIM}Mevcut ayar korundu${RESET}"
-    fi
+    echo -e "  ${DIM}Değiştirmek için: bash install.sh <gün>${RESET}"
 else
-    echo -n "  Abonelik yenileme gününüz (ayın kaçı? 1-31): "
-    read -r RENEWAL_DAY
-    if [[ "$RENEWAL_DAY" =~ ^[0-9]+$ && "$RENEWAL_DAY" -ge 1 && "$RENEWAL_DAY" -le 31 ]]; then
-        echo "{\"renewal_day\": $RENEWAL_DAY}" > "$SUB_FILE"
-        echo -e "  ${GREEN}✓${RESET} Yenileme günü kaydedildi: $RENEWAL_DAY"
-    else
-        echo "{\"renewal_day\": 1}" > "$SUB_FILE"
-        echo -e "  ${DIM}Geçersiz gün, varsayılan 1 olarak ayarlandı${RESET}"
-    fi
+    echo -e "  ${DIM}Abonelik takibi için yenileme gününüzü belirtin:${RESET}"
+    echo -e "  ${DIM}  bash install.sh <gün>  (ör: bash install.sh 16)${RESET}"
+    echo -e "  ${DIM}  veya: curl ... | bash -s 16${RESET}"
 fi
 echo ""
 
