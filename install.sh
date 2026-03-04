@@ -205,12 +205,14 @@ def fmt_reset(ts):
     days = remaining // 86400
     hours = (remaining % 86400) // 3600
     mins = (remaining % 3600) // 60
+    parts = []
     if days > 0:
-        return f"{days}g {hours}s {mins}dk"
-    elif hours > 0:
-        return f"{hours}s {mins}dk"
-    else:
-        return f"{mins}dk"
+        parts.append(f"{days}g")
+    if hours > 0:
+        parts.append(f"{hours}s")
+    if mins > 0 and days == 0:
+        parts.append(f"{mins}dk")
+    return "".join(parts)
 
 # --- Abonelik kalan gün ---
 def get_subscription_days():
@@ -280,15 +282,14 @@ if sub_days is not None:
         sub_color = "\033[38;2;255;165;0m"  # turuncu
     else:
         sub_color = "\033[38;2;245;39;39m"  # kırmızı
-    sub_text = f"{sub_color}{sub_days}g kaldı{RESET}"
+    sub_text = f"{sub_color}{sub_days}g{RESET}"
 
 line1_parts = [
     f"{CYAN}{model_short}{RESET}",
     f"{fmt_tokens(total_tokens)}/{fmt_tokens(cw_size)}",
     f"5h {pct_5h} {DIM}{fmt_reset(reset_5h)}{RESET}",
     f"7d {pct_7d} {DIM}{fmt_reset(reset_7d)}{RESET}",
-    f"{ctx_color}%{used_pct} kull.{RESET}",
-    f"{ctx_color}%{remaining_pct} kalan{RESET}",
+    f"{ctx_color}{used_pct}/{remaining_pct}%{RESET}",
     f"{DIM}${cost:.2f}{RESET}",
 ]
 if sub_text:
