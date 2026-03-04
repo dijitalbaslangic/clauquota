@@ -25,26 +25,22 @@ Abonelik renkleri: yeşil (>10g), sarı (5-10g), turuncu (3-5g), kırmızı (≤
 ## Kurulum
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dijitalbaslangic/clauquota/main/install.sh | bash -s 16
+curl -fsSL https://raw.githubusercontent.com/dijitalbaslangic/clauquota/main/install.sh | bash
 ```
 
-Sondaki `16` abonelik yenileme gününüzdür (ayın kaçında yenileniyor). Kendi gününüzle değiştirin.
+Kurulum sırasında abonelik yenileme gününüz sorulacaktır.
 
 Sonra Claude Code'u yeniden başlat.
 
 ## Güncelleme
 
-Aynı komutu tekrar çalıştırın (abonelik günü olmadan da olur, mevcut ayar korunur):
+Aynı komutu tekrar çalıştırın:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dijitalbaslangic/clauquota/main/install.sh | bash
 ```
 
-Abonelik gününü değiştirmek için:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/dijitalbaslangic/clauquota/main/install.sh | bash -s 20
-```
+Mevcut abonelik ayarınız korunur, isterseniz değiştirebilirsiniz.
 
 ## Gereksinimler
 
