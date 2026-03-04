@@ -287,8 +287,8 @@ line1_parts = [
     f"{fmt_tokens(total_tokens)}/{fmt_tokens(cw_size)}",
     f"5h {pct_5h} {DIM}{fmt_reset(reset_5h)}{RESET}",
     f"{ctx_color}%{used_pct} kull.{RESET}",
-    f"7d {pct_7d} {DIM}{fmt_reset(reset_7d)}{RESET}",
     f"{ctx_color}%{remaining_pct} kalan{RESET}",
+    f"7d {pct_7d} {DIM}{fmt_reset(reset_7d)}{RESET}",
     f"{DIM}${cost:.2f}{RESET}",
 ]
 if sub_text:
