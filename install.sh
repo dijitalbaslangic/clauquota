@@ -40,6 +40,32 @@ fi
 echo -e "  ${GREEN}✓${RESET} Tüm kontroller başarılı"
 echo ""
 
+# Abonelik yenileme günü
+SUB_FILE="$HOME/.claude/subscription.json"
+if [ -f "$SUB_FILE" ]; then
+    CURRENT_DAY=$(python3 -c "import json; print(json.load(open('$SUB_FILE')).get('renewal_day', ''))" 2>/dev/null)
+    echo -e "  ${DIM}Mevcut abonelik yenileme günü: ${RESET}${GREEN}${CURRENT_DAY}${RESET}"
+    echo -n "  Yeni gün girmek ister misiniz? (Enter=koru, 1-31): "
+    read -r NEW_DAY
+    if [[ -n "$NEW_DAY" && "$NEW_DAY" =~ ^[0-9]+$ && "$NEW_DAY" -ge 1 && "$NEW_DAY" -le 31 ]]; then
+        echo "{\"renewal_day\": $NEW_DAY}" > "$SUB_FILE"
+        echo -e "  ${GREEN}✓${RESET} Yenileme günü $NEW_DAY olarak güncellendi"
+    else
+        echo -e "  ${DIM}Mevcut ayar korundu${RESET}"
+    fi
+else
+    echo -n "  Abonelik yenileme gününüz (ayın kaçı? 1-31): "
+    read -r RENEWAL_DAY
+    if [[ "$RENEWAL_DAY" =~ ^[0-9]+$ && "$RENEWAL_DAY" -ge 1 && "$RENEWAL_DAY" -le 31 ]]; then
+        echo "{\"renewal_day\": $RENEWAL_DAY}" > "$SUB_FILE"
+        echo -e "  ${GREEN}✓${RESET} Yenileme günü kaydedildi: $RENEWAL_DAY"
+    else
+        echo "{\"renewal_day\": 1}" > "$SUB_FILE"
+        echo -e "  ${DIM}Geçersiz gün, varsayılan 1 olarak ayarlandı${RESET}"
+    fi
+fi
+echo ""
+
 # Durum çubuğu scriptini oluştur
 mkdir -p ~/.claude
 
@@ -53,6 +79,7 @@ import json
 import os
 import time
 import subprocess
+import datetime
 
 HOME = os.path.expanduser("~")
 CACHE_FILE = os.path.join(HOME, ".claude", "ratelimit_cache.json")
@@ -185,6 +212,37 @@ def fmt_reset(ts):
     else:
         return f"{mins}dk"
 
+# --- Abonelik kalan gün ---
+def get_subscription_days():
+    sub_file = os.path.join(HOME, ".claude", "subscription.json")
+    try:
+        with open(sub_file) as f:
+            renewal_day = json.load(f).get("renewal_day", 0)
+        if not renewal_day:
+            return None
+        today = datetime.date.today()
+        # Bu ayda yenileme günü
+        try:
+            next_renewal = today.replace(day=renewal_day)
+        except ValueError:
+            # Ay günden kısa ise (ör. 31 şubat), ayın son günü
+            import calendar
+            last_day = calendar.monthrange(today.year, today.month)[1]
+            next_renewal = today.replace(day=min(renewal_day, last_day))
+        # Eğer yenileme geçtiyse, sonraki aya al
+        if next_renewal <= today:
+            month = today.month + 1
+            year = today.year
+            if month > 12:
+                month = 1
+                year += 1
+            import calendar
+            last_day = calendar.monthrange(year, month)[1]
+            next_renewal = datetime.date(year, month, min(renewal_day, last_day))
+        return (next_renewal - today).days
+    except Exception:
+        return None
+
 # --- Çıktıyı formatla ---
 util_5h = cache.get("5h_util", 0)
 reset_5h = cache.get("5h_reset", 0)
@@ -210,6 +268,20 @@ elif used_pct < 80:
 else:
     ctx_color = "\033[38;2;245;39;39m"
 
+# Abonelik kalan gün
+sub_days = get_subscription_days()
+sub_text = ""
+if sub_days is not None:
+    if sub_days > 10:
+        sub_color = GREEN
+    elif sub_days > 5:
+        sub_color = YELLOW
+    elif sub_days > 3:
+        sub_color = "\033[38;2;255;165;0m"  # turuncu
+    else:
+        sub_color = "\033[38;2;245;39;39m"  # kırmızı
+    sub_text = f"{sub_color}{sub_days}g kaldı{RESET}"
+
 line1_parts = [
     f"{CYAN}{model_short}{RESET}",
     f"{fmt_tokens(total_tokens)}/{fmt_tokens(cw_size)}",
@@ -219,6 +291,8 @@ line1_parts = [
     f"7d {pct_7d} {DIM}{fmt_reset(reset_7d)}{RESET}",
     f"{DIM}${cost:.2f}{RESET}",
 ]
+if sub_text:
+    line1_parts.append(sub_text)
 
 print(f" {DIM}|{RESET} ".join(line1_parts))
 STATUSLINE
@@ -256,5 +330,5 @@ echo -e "  ${GREEN}✓${RESET} ~/.claude/settings.json güncellendi"
 echo ""
 echo -e "  ${GREEN}Tamam!${RESET} Durum çubuğunu görmek için Claude Code'u yeniden başlatın."
 echo ""
-echo -e "  ${DIM}Gösterir: Model | Token | Bağlam % | 5s kota | 7g kota | Maliyet${RESET}"
+echo -e "  ${DIM}Gösterir: Model | Token | Bağlam % | 5s kota | 7g kota | Maliyet | Abonelik${RESET}"
 echo ""
